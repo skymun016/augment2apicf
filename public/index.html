@@ -387,6 +387,32 @@
             margin-bottom: 1rem;
             display: none;
         }
+
+        /* 密码重置界面样式 */
+        .reset-password-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+        }
+
+        .reset-password-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -413,6 +439,63 @@
             <div style="font-size: 0.8rem; color: #6c757d; margin-top: 1rem;">
                 💡 密码验证通过后会在本设备记住您的登录状态
             </div>
+        </div>
+    </div>
+
+    <!-- 密码重置界面 -->
+    <div id="reset-password-overlay" class="reset-password-overlay" style="display: none;">
+        <div class="reset-password-card">
+            <div style="font-size: 2.5rem; margin-bottom: 1rem;">🔄</div>
+            <h2 style="color: #2c3e50; margin-bottom: 1rem;">重置访问密码</h2>
+            <p style="color: #6c757d; margin-bottom: 2rem;">请输入当前密码，然后设置新的访问密码</p>
+
+            <form id="reset-password-form">
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; text-align: left; margin-bottom: 0.5rem; font-weight: 600; color: #2c3e50;">当前密码</label>
+                    <input
+                        type="password"
+                        id="current-password"
+                        class="password-input"
+                        placeholder="请输入当前密码"
+                        required
+                    >
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; text-align: left; margin-bottom: 0.5rem; font-weight: 600; color: #2c3e50;">新密码</label>
+                    <input
+                        type="password"
+                        id="new-password"
+                        class="password-input"
+                        placeholder="请输入新密码"
+                        minlength="6"
+                        required
+                    >
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; text-align: left; margin-bottom: 0.5rem; font-weight: 600; color: #2c3e50;">确认新密码</label>
+                    <input
+                        type="password"
+                        id="confirm-password"
+                        class="password-input"
+                        placeholder="请再次输入新密码"
+                        minlength="6"
+                        required
+                    >
+                </div>
+
+                <div id="reset-password-error" class="password-error">密码验证失败，请检查输入</div>
+
+                <div style="display: flex; gap: 1rem;">
+                    <button type="button" onclick="hideResetPasswordOverlay()" class="btn" style="flex: 1; background: #6c757d;">
+                        取消
+                    </button>
+                    <button type="submit" class="btn" style="flex: 1;">
+                        🔄 更新密码
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -478,7 +561,7 @@
 
     <script>
         let authToken = '';
-        const ACCESS_PASSWORD = 'augment2024'; // 访问密码
+        let ACCESS_PASSWORD = 'augment2024'; // 默认访问密码
 
         function getAuthToken() {
             const cookies = document.cookie.split(';');
@@ -510,9 +593,15 @@
             document.getElementById('password-overlay').style.display = 'none';
         }
 
+        // 获取当前密码（支持自定义密码）
+        function getCurrentPassword() {
+            const customPassword = localStorage.getItem('customPassword');
+            return customPassword || ACCESS_PASSWORD;
+        }
+
         // 验证密码
         function verifyPassword(password) {
-            return password === ACCESS_PASSWORD;
+            return password === getCurrentPassword();
         }
 
         // 处理密码表单提交
@@ -762,12 +851,60 @@
             }, 3000);
         }
 
-        // 重置密码
+        // 显示密码重置界面
         function resetPassword() {
-            if (confirm('确定要重置访问密码吗？重置后需要重新输入密码才能访问。')) {
-                localStorage.removeItem('passwordAuthenticated');
-                location.reload();
+            document.getElementById('reset-password-overlay').style.display = 'flex';
+            document.getElementById('current-password').focus();
+        }
+
+        // 隐藏密码重置界面
+        function hideResetPasswordOverlay() {
+            document.getElementById('reset-password-overlay').style.display = 'none';
+            // 清空表单
+            document.getElementById('reset-password-form').reset();
+            document.getElementById('reset-password-error').style.display = 'none';
+        }
+
+        // 处理密码重置表单提交
+        function handleResetPasswordSubmit(event) {
+            event.preventDefault();
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            const errorEl = document.getElementById('reset-password-error');
+
+            // 验证当前密码
+            if (!verifyPassword(currentPassword)) {
+                errorEl.textContent = '当前密码错误';
+                errorEl.style.display = 'block';
+                return;
             }
+
+            // 验证新密码
+            if (newPassword.length < 6) {
+                errorEl.textContent = '新密码长度至少6位';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            // 验证密码确认
+            if (newPassword !== confirmPassword) {
+                errorEl.textContent = '两次输入的新密码不一致';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            // 更新密码
+            updatePassword(newPassword);
+            hideResetPasswordOverlay();
+            showMessage('密码更新成功！ 🎉', 'success');
+        }
+
+        // 更新密码
+        function updatePassword(newPassword) {
+            // 将新密码存储到localStorage
+            localStorage.setItem('customPassword', newPassword);
+            console.log('密码已更新并保存');
         }
 
         // 初始化应用
@@ -779,6 +916,9 @@
         document.addEventListener('DOMContentLoaded', function() {
             // 绑定密码表单事件
             document.getElementById('password-form').addEventListener('submit', handlePasswordSubmit);
+
+            // 绑定密码重置表单事件
+            document.getElementById('reset-password-form').addEventListener('submit', handleResetPasswordSubmit);
 
             // 检查密码验证状态
             if (!checkPasswordAuth()) {
