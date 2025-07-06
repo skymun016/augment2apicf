@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Augment Token Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #7f8c8d;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card h2 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: transform 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .token-list {
+            margin-top: 2rem;
+        }
+
+        .token-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .token-info {
+            flex: 1;
+        }
+
+        .token-info .token {
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: #495057;
+            word-break: break-all;
+        }
+
+        .token-info .tenant-url {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+
+        .token-info .remark {
+            font-size: 0.8rem;
+            color: #28a745;
+            margin-top: 0.25rem;
+            font-style: italic;
+        }
+
+        .token-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+        }
+
+        .message {
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 1rem;
+        }
+
+        .steps {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .steps ol {
+            margin-left: 1rem;
+        }
+
+        .steps li {
+            margin-bottom: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .token-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .token-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Augment Token Manager</h1>
+            <p>简单易用的 Augment Token 获取和管理工具</p>
+        </div>
+
+        <div id="message" class="message" style="display: none;"></div>
+
+        <!-- 获取Token卡片 -->
+        <div class="card">
+            <h2>🔑 获取新的 Token</h2>
+            
+            <div class="steps">
+                <p><strong>使用步骤：</strong></p>
+                <ol>
+                    <li>点击"获取授权链接"按钮</li>
+                    <li>复制授权链接并在新窗口中打开</li>
+                    <li>完成 Augment 账号登录/注册</li>
+                    <li>从回调页面复制授权码</li>
+                    <li>在下方输入授权码和租户URL，点击"获取Token"</li>
+                </ol>
+            </div>
+
+            <div style="margin-bottom: 2rem;">
+                <button id="get-auth-btn" class="btn">📋 获取授权链接</button>
+                <div id="auth-url-container" style="display: none; margin-top: 1rem;">
+                    <div class="form-group">
+                        <label>授权链接（点击复制）：</label>
+                        <input type="text" id="auth-url" readonly onclick="this.select(); document.execCommand('copy'); showMessage('授权链接已复制到剪贴板', 'success')">
+                    </div>
+                </div>
+            </div>
+
+            <form id="token-form">
+                <div class="form-group">
+                    <label for="auth-code">授权码 *</label>
+                    <input type="text" id="auth-code" name="code" required placeholder="从授权回调页面复制的授权码">
+                </div>
+
+                <div class="form-group">
+                    <label for="tenant-url">租户URL *</label>
+                    <input type="url" id="tenant-url" name="tenant_url" required placeholder="https://d0.api.augmentcode.com/" value="https://d0.api.augmentcode.com/">
+                </div>
+
+                <button type="submit" class="btn" id="submit-btn">
+                    🎯 获取 Token
+                </button>
+            </form>
+        </div>
+
+        <!-- Token列表卡片 -->
+        <div class="card">
+            <h2>📋 已保存的 Tokens</h2>
+            <div id="token-list-container">
+                <div class="loading">加载中...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let authToken = '';
+
+        // 从cookie获取认证token
+        function getAuthToken() {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'auth_token') {
+                    return value;
+                }
+            }
+            return '';
+        }
+
+        // 显示消息
+        function showMessage(text, type = 'success') {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = text;
+            messageEl.className = `message ${type}`;
+            messageEl.style.display = 'block';
+            
+            setTimeout(() => {
+                messageEl.style.display = 'none';
+            }, 5000);
+        }
+
+        // 获取授权链接
+        document.getElementById('get-auth-btn').addEventListener('click', async function() {
+            try {
+                const response = await fetch('/api/auth', {
+                    headers: {
+                        'X-Auth-Token': authToken
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    document.getElementById('auth-url').value = data.authorize_url;
+                    document.getElementById('auth-url-container').style.display = 'block';
+                    showMessage('授权链接已生成，请复制并在新窗口中打开', 'success');
+                } else {
+                    showMessage('获取授权链接失败: ' + (data.error || '未知错误'), 'error');
+                }
+            } catch (error) {
+                showMessage('网络错误: ' + error.message, 'error');
+            }
+        });
+
+        // 提交表单获取token
+        document.getElementById('token-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submit-btn');
+            const formData = new FormData(e.target);
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = '获取中...';
+            
+            try {
+                const response = await fetch('/api/callback', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Auth-Token': authToken
+                    },
+                    body: JSON.stringify({
+                        code: formData.get('code'),
+                        tenant_url: formData.get('tenant_url')
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    showMessage('Token 获取成功！', 'success');
+                    document.getElementById('token-form').reset();
+                    document.getElementById('tenant-url').value = 'https://d0.api.augmentcode.com/';
+                    loadTokens(); // 重新加载token列表
+                } else {
+                    showMessage('获取Token失败: ' + (data.error || '未知错误'), 'error');
+                }
+            } catch (error) {
+                showMessage('网络错误: ' + error.message, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🎯 获取 Token';
+            }
+        });
+
+        // 加载token列表
+        async function loadTokens() {
+            const container = document.getElementById('token-list-container');
+            
+            try {
+                const response = await fetch('/api/tokens', {
+                    headers: {
+                        'X-Auth-Token': authToken
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    if (data.tokens.length === 0) {
+                        container.innerHTML = `
+                            <div class="empty-state">
+                                <h3>🎭 还没有保存的 Token</h3>
+                                <p>使用上方的表单获取您的第一个 Token</p>
+                            </div>
+                        `;
+                    } else {
+                        container.innerHTML = data.tokens.map(token => `
+                            <div class="token-item">
+                                <div class="token-info">
+                                    <div class="token">${token.token}</div>
+                                    <div class="tenant-url">${token.tenant_url}</div>
+                                    ${token.remark ? `<div class="remark">备注: ${token.remark}</div>` : ''}
+                                </div>
+                                <div class="token-actions">
+                                    <button class="btn btn-small" onclick="editRemark('${token.token}', '${token.remark || ''}')">✏️ 备注</button>
+                                    <button class="btn btn-danger btn-small" onclick="deleteToken('${token.token}')">🗑️ 删除</button>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                } else {
+                    container.innerHTML = `<div class="message error">加载失败: ${data.error}</div>`;
+                }
+            } catch (error) {
+                container.innerHTML = `<div class="message error">网络错误: ${error.message}</div>`;
+            }
+        }
+
+        // 删除token
+        async function deleteToken(token) {
+            if (!confirm('确定要删除这个 Token 吗？')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/token/${encodeURIComponent(token)}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-Auth-Token': authToken
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    showMessage('Token 删除成功', 'success');
+                    loadTokens();
+                } else {
+                    showMessage('删除失败: ' + (data.error || '未知错误'), 'error');
+                }
+            } catch (error) {
+                showMessage('网络错误: ' + error.message, 'error');
+            }
+        }
+
+        // 编辑备注
+        async function editRemark(token, currentRemark) {
+            const newRemark = prompt('请输入备注:', currentRemark);
+            if (newRemark === null) return; // 用户取消
+            
+            try {
+                const response = await fetch(`/api/token/${encodeURIComponent(token)}/remark`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Auth-Token': authToken
+                    },
+                    body: JSON.stringify({ remark: newRemark })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    showMessage('备注更新成功', 'success');
+                    loadTokens();
+                } else {
+                    showMessage('更新失败: ' + (data.error || '未知错误'), 'error');
+                }
+            } catch (error) {
+                showMessage('网络错误: ' + error.message, 'error');
+            }
+        }
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            authToken = getAuthToken();
+            loadTokens();
+        });
+    </script>
+</body>
+</html>

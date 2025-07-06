@@ -1,0 +1,20 @@
+name = "augment-token-manager"
+main = "worker.js"
+compatibility_date = "2023-12-01"
+
+# 环境变量配置
+[vars]
+# 这些变量可以在 Cloudflare Dashboard 中设置
+# REDIS_CONN_STRING = "redis://..."
+# ACCESS_PWD = "your-password"
+
+# KV 存储配置（如果不使用 Redis）
+[[kv_namespaces]]
+binding = "TOKENS"
+id = "your-kv-namespace-id"
+preview_id = "your-preview-kv-namespace-id"
+
+# 路由配置
+[[routes]]
+pattern = "your-domain.com/*"
+zone_name = "your-domain.com"
