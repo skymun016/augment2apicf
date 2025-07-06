@@ -5,42 +5,313 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Augment Token Manager</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; color: #333; line-height: 1.6; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
-        .header { text-align: center; margin-bottom: 3rem; }
-        .header h1 { color: #2c3e50; margin-bottom: 0.5rem; }
-        .header p { color: #7f8c8d; }
-        .card { background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); padding: 2rem; margin-bottom: 2rem; }
-        .card h2 { color: #2c3e50; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
-        .btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 5px; cursor: pointer; font-size: 1rem; transition: transform 0.2s; text-decoration: none; display: inline-block; }
-        .btn:hover { transform: translateY(-2px); }
-        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-        .btn-danger { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); }
-        .form-group { margin-bottom: 1.5rem; }
-        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
-        .form-group input { width: 100%; padding: 0.75rem; border: 2px solid #e1e5e9; border-radius: 5px; font-size: 1rem; }
-        .form-group input:focus { outline: none; border-color: #667eea; }
-        .token-item { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 5px; padding: 1rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; }
-        .token-info { flex: 1; }
-        .token-info .token { font-family: monospace; font-size: 0.9rem; color: #495057; word-break: break-all; }
-        .token-info .tenant-url { font-size: 0.8rem; color: #6c757d; margin-top: 0.25rem; }
-        .token-info .remark { font-size: 0.8rem; color: #28a745; margin-top: 0.25rem; font-style: italic; }
-        .token-actions { display: flex; gap: 0.5rem; }
-        .btn-small { padding: 0.5rem 1rem; font-size: 0.8rem; }
-        .message { padding: 1rem; border-radius: 5px; margin-bottom: 1rem; }
-        .message.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .message.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .loading { text-align: center; padding: 2rem; color: #6c757d; }
-        .empty-state { text-align: center; padding: 3rem; color: #6c757d; }
-        .empty-state h3 { margin-bottom: 1rem; }
-        .steps { background: #e3f2fd; border-left: 4px solid #2196f3; padding: 1rem; margin: 1rem 0; }
-        .steps ol { margin-left: 1rem; }
-        .steps li { margin-bottom: 0.5rem; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .card h2 {
+            color: #2c3e50;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.875rem 2rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.6);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.95rem;
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            background: white;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+        }
+        .token-item {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(233, 236, 239, 0.5);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        .token-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .token-info {
+            flex: 1;
+        }
+
+        .token-info .token {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: #495057;
+            word-break: break-all;
+            background: rgba(248, 249, 250, 0.8);
+            padding: 0.5rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .token-info .tenant-url {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+
+        .token-info .remark {
+            font-size: 0.85rem;
+            color: #28a745;
+            margin-top: 0.25rem;
+            font-style: italic;
+        }
+
+        .token-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            border-radius: 8px;
+        }
+
+        .message {
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            font-weight: 500;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.success {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #6c757d;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+        }
+
+        .steps {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-left: 4px solid #2196f3;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .steps ol {
+            margin-left: 1.5rem;
+        }
+
+        .steps li {
+            margin-bottom: 0.75rem;
+            font-weight: 500;
+        }
+
         @media (max-width: 768px) {
-            .container { padding: 1rem; }
-            .token-item { flex-direction: column; align-items: flex-start; gap: 1rem; }
-            .token-actions { width: 100%; justify-content: flex-end; }
+            .container {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 2.5rem;
+            }
+
+            .card {
+                padding: 1.5rem;
+            }
+
+            .token-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .token-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
         }
     </style>
 </head>
@@ -48,7 +319,8 @@
     <div class="container">
         <div class="header">
             <h1>🚀 Augment Token Manager</h1>
-            <p>简单易用的 Augment Token 获取和管理工具 - 无需密码访问</p>
+            <p>✨ 简单易用的 Augment Token 获取和管理工具 ✨</p>
+            <p style="font-size: 1rem; margin-top: 0.5rem; opacity: 0.8;">🔓 无需密码访问 | 🌐 全球 CDN 加速 | ⚡ 极速响应</p>
         </div>
 
         <div id="message" class="message" style="display: none;"></div>
@@ -195,14 +467,33 @@
                 const data = await response.json();
                 if (data.status === 'success') {
                     if (data.tokens.length === 0) {
-                        container.innerHTML = '<div class="empty-state"><h3>🎭 还没有保存的 Token</h3><p>使用上方的表单获取您的第一个 Token</p></div>';
+                        container.innerHTML = `
+                            <div class="empty-state" style="animation: fadeInUp 0.5s ease;">
+                                <div style="font-size: 4rem; margin-bottom: 1rem;">🎭</div>
+                                <h3>还没有保存的 Token</h3>
+                                <p>使用上方的表单获取您的第一个 Token</p>
+                                <div style="margin-top: 2rem;">
+                                    <div style="display: inline-block; padding: 0.5rem 1rem; background: rgba(102, 126, 234, 0.1); border-radius: 20px; font-size: 0.85rem; color: #667eea;">
+                                        💡 提示：完成授权后会自动保存 Token
+                                    </div>
+                                </div>
+                            </div>
+                        `;
                     } else {
-                        container.innerHTML = data.tokens.map(token => `
-                            <div class="token-item">
+                        container.innerHTML = data.tokens.map((token, index) => `
+                            <div class="token-item" style="animation: fadeInUp 0.5s ease ${index * 0.1}s both;">
                                 <div class="token-info">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                        <span style="width: 8px; height: 8px; background: #28a745; border-radius: 50%; display: inline-block;"></span>
+                                        <span style="font-size: 0.8rem; color: #28a745; font-weight: 500;">活跃</span>
+                                        <span style="font-size: 0.75rem; color: #6c757d;">创建于 ${new Date(token.created_at || Date.now()).toLocaleDateString()}</span>
+                                    </div>
                                     <div class="token">${token.token}</div>
-                                    <div class="tenant-url">${token.tenant_url}</div>
-                                    ${token.remark ? `<div class="remark">备注: ${token.remark}</div>` : ''}
+                                    <div class="tenant-url">🌐 ${token.tenant_url}</div>
+                                    ${token.remark ? `<div class="remark">📝 ${token.remark}</div>` : ''}
+                                </div>
+                                <div class="token-actions">
+                                    <button class="btn btn-small" onclick="copyToClipboard('${token.token}')">📋 复制</button>
                                 </div>
                             </div>
                         `).join('');
@@ -213,6 +504,22 @@
             } catch (error) {
                 container.innerHTML = `<div class="message error">网络错误: ${error.message}</div>`;
             }
+        }
+
+        // 复制到剪贴板功能
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function() {
+                showMessage('Token 已复制到剪贴板！', 'success');
+            }).catch(function(err) {
+                // 降级方案
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showMessage('Token 已复制到剪贴板！', 'success');
+            });
         }
 
         document.addEventListener('DOMContentLoaded', function() {
