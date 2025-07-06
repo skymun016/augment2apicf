@@ -56,9 +56,10 @@ export async function onRequestGet(context) {
 
 async function createOAuthState() {
     const codeVerifier = generateRandomString(128);
-    const codeChallenge = await base64URLEncode(await sha256(codeVerifier));
+    const codeChallengeHash = await sha256(codeVerifier);
+    const codeChallenge = base64URLEncode(codeChallengeHash);
     const state = generateRandomString(32);
-    
+
     return {
         codeVerifier,
         codeChallenge,
@@ -98,10 +99,13 @@ async function validateAuth(request, env) {
 }
 
 function generateRandomString(length) {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
     let result = '';
+    const randomValues = new Uint8Array(length);
+    crypto.getRandomValues(randomValues);
+
     for (let i = 0; i < length; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
+        result += chars.charAt(randomValues[i] % chars.length);
     }
     return result;
 }
@@ -109,14 +113,15 @@ function generateRandomString(length) {
 async function sha256(message) {
     const msgBuffer = new TextEncoder().encode(message);
     const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    return new Uint8Array(hashBuffer);
 }
 
-async function base64URLEncode(str) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(str);
-    const base64 = btoa(String.fromCharCode(...data));
+function base64URLEncode(buffer) {
+    // 将 Uint8Array 转换为字符串
+    const bytes = Array.from(buffer);
+    const binaryString = String.fromCharCode(...bytes);
+    // 转换为 base64 并替换字符
+    const base64 = btoa(binaryString);
     return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 }
 
