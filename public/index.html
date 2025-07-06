@@ -361,7 +361,10 @@
 
         <!-- Token列表卡片 -->
         <div class="card">
-            <h2>📋 已保存的 Tokens</h2>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+                <h2 style="margin-bottom: 0;">📋 已保存的 Tokens</h2>
+                <div id="copy-message" style="display: none;"></div>
+            </div>
             <div id="token-list-container">
                 <div class="loading">加载中...</div>
             </div>
@@ -474,7 +477,7 @@
                     } else {
                         container.innerHTML = data.tokens.map((token, index) => `
                             <div class="token-item" style="animation: fadeInUp 0.5s ease ${index * 0.1}s both;">
-                                <div class="token-info">
+                                <div class="token-info" style="width: 100%;">
                                     <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
                                         <span style="width: 8px; height: 8px; background: #28a745; border-radius: 50%; display: inline-block;"></span>
                                         <span style="font-size: 0.8rem; color: #28a745; font-weight: 500;">活跃</span>
@@ -483,23 +486,25 @@
 
                                     <div style="margin-bottom: 0.75rem;">
                                         <div style="font-size: 0.8rem; color: #6c757d; margin-bottom: 0.25rem;">🔑 Access Token</div>
-                                        <div class="token">${token.token}</div>
+                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                            <div class="token" style="flex: 1; margin-bottom: 0;">${token.token}</div>
+                                            <button class="btn btn-small" onclick="copyToClipboard('${token.token}', 'Token')" title="复制 Token" style="flex-shrink: 0;">
+                                                📋
+                                            </button>
+                                        </div>
                                     </div>
 
                                     <div style="margin-bottom: 0.5rem;">
                                         <div style="font-size: 0.8rem; color: #6c757d; margin-bottom: 0.25rem;">🌐 Tenant URL</div>
-                                        <div style="font-family: 'SF Mono', Monaco, monospace; font-size: 0.85rem; color: #495057; background: rgba(248, 249, 250, 0.8); padding: 0.4rem; border-radius: 6px;">${token.tenant_url}</div>
+                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                            <div style="flex: 1; font-family: 'SF Mono', Monaco, monospace; font-size: 0.85rem; color: #495057; background: rgba(248, 249, 250, 0.8); padding: 0.4rem; border-radius: 6px;">${token.tenant_url}</div>
+                                            <button class="btn btn-small" onclick="copyToClipboard('${token.tenant_url}', 'Tenant URL')" title="复制 Tenant URL" style="flex-shrink: 0; background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); box-shadow: 0 4px 15px rgba(23, 162, 184, 0.4);">
+                                                🌐
+                                            </button>
+                                        </div>
                                     </div>
 
                                     ${token.remark ? `<div class="remark">📝 ${token.remark}</div>` : ''}
-                                </div>
-                                <div class="token-actions">
-                                    <button class="btn btn-small" onclick="copyToClipboard('${token.token}', 'Token')" title="复制 Token">
-                                        📋 Token
-                                    </button>
-                                    <button class="btn btn-small" onclick="copyToClipboard('${token.tenant_url}', 'Tenant URL')" title="复制 Tenant URL" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); box-shadow: 0 4px 15px rgba(23, 162, 184, 0.4);">
-                                        🌐 URL
-                                    </button>
                                 </div>
                             </div>
                         `).join('');
@@ -515,7 +520,7 @@
         // 复制到剪贴板功能
         function copyToClipboard(text, type = 'Token') {
             navigator.clipboard.writeText(text).then(function() {
-                showMessage(`${type} 已复制到剪贴板！ 📋`, 'success');
+                showCopyMessage(`${type} 已复制！ 📋`);
             }).catch(function(err) {
                 // 降级方案
                 const textArea = document.createElement('textarea');
@@ -524,8 +529,33 @@
                 textArea.select();
                 document.execCommand('copy');
                 document.body.removeChild(textArea);
-                showMessage(`${type} 已复制到剪贴板！ 📋`, 'success');
+                showCopyMessage(`${type} 已复制！ 📋`);
             });
+        }
+
+        // 在标题后显示复制成功消息
+        function showCopyMessage(message) {
+            const copyMessageEl = document.getElementById('copy-message');
+            copyMessageEl.innerHTML = `
+                <div style="
+                    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+                    color: #155724;
+                    padding: 0.5rem 1rem;
+                    border-radius: 8px;
+                    font-size: 0.85rem;
+                    font-weight: 500;
+                    border: 1px solid #c3e6cb;
+                    animation: slideIn 0.3s ease;
+                ">
+                    ${message}
+                </div>
+            `;
+            copyMessageEl.style.display = 'block';
+
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                copyMessageEl.style.display = 'none';
+            }, 3000);
         }
 
         document.addEventListener('DOMContentLoaded', function() {
