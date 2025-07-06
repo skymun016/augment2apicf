@@ -5,6 +5,17 @@ export async function onRequestGet(context) {
     const { request, env } = context;
     
     try {
+        // 检查 KV 绑定
+        if (!env.TOKENS) {
+            return new Response(JSON.stringify({
+                status: 'error',
+                error: 'KV 存储未正确配置'
+            }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
         // 验证认证
         if (!(await validateAuth(request, env))) {
             return new Response(JSON.stringify({
@@ -70,16 +81,20 @@ function generateAuthorizeURL(oauthState) {
 
 async function validateAuth(request, env) {
     if (!env.ACCESS_PWD) return true; // 如果没有设置密码，不需要验证
-    
-    const authToken = request.headers.get('X-Auth-Token') || 
+
+    const authToken = request.headers.get('X-Auth-Token') ||
                      getCookieValue(request.headers.get('Cookie'), 'auth_token');
-    
+
     if (!authToken) return false;
-    
-    const sessionKey = `session_token:${authToken}`;
-    const session = await env.TOKENS.get(sessionKey);
-    
-    return session === 'valid';
+
+    try {
+        const sessionKey = `session_token:${authToken}`;
+        const session = await env.TOKENS.get(sessionKey);
+        return session === 'valid';
+    } catch (error) {
+        console.error('KV access error in validateAuth:', error);
+        return false;
+    }
 }
 
 function generateRandomString(length) {

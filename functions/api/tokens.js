@@ -14,20 +14,35 @@ export async function onRequestGet(context) {
             });
         }
         
+        // 检查 KV 绑定
+        if (!env.TOKENS) {
+            return new Response(JSON.stringify({
+                status: 'error',
+                error: 'KV 存储未正确配置'
+            }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
         // 获取所有 token
         const { keys } = await env.TOKENS.list({ prefix: 'token:' });
         const tokens = [];
-        
+
         for (const key of keys) {
             const tokenDataStr = await env.TOKENS.get(key.name);
             if (tokenDataStr) {
-                const tokenData = JSON.parse(tokenDataStr);
-                tokens.push({
-                    token: tokenData.token,
-                    tenant_url: tokenData.tenant_url,
-                    remark: tokenData.remark || '',
-                    created_at: tokenData.created_at
-                });
+                try {
+                    const tokenData = JSON.parse(tokenDataStr);
+                    tokens.push({
+                        token: tokenData.token,
+                        tenant_url: tokenData.tenant_url,
+                        remark: tokenData.remark || '',
+                        created_at: tokenData.created_at
+                    });
+                } catch (parseError) {
+                    console.error('Error parsing token data:', parseError);
+                }
             }
         }
         
