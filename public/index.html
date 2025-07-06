@@ -330,14 +330,8 @@
             <h2>🔑 获取新的 Token</h2>
             
             <div class="steps">
-                <p><strong>使用步骤：</strong></p>
-                <ol>
-                    <li>点击"获取授权链接"按钮</li>
-                    <li>复制授权链接并在新窗口中打开</li>
-                    <li>完成 Augment 账号登录/注册</li>
-                    <li>从授权完成页面点击"Copy to Clipboard"按钮</li>
-                    <li>在下方粘贴完整的 JSON 授权数据，点击"获取Token"</li>
-                </ol>
+                <p><strong>💡 快速上手：</strong></p>
+                <p>1️⃣ 获取授权链接 → 2️⃣ 完成注册登录 → 3️⃣ 复制 JSON 数据 → 4️⃣ 粘贴获取 Token</p>
             </div>
 
             <div style="margin-bottom: 2rem;">
@@ -469,13 +463,11 @@
                     if (data.tokens.length === 0) {
                         container.innerHTML = `
                             <div class="empty-state" style="animation: fadeInUp 0.5s ease;">
-                                <div style="font-size: 4rem; margin-bottom: 1rem;">🎭</div>
-                                <h3>还没有保存的 Token</h3>
-                                <p>使用上方的表单获取您的第一个 Token</p>
-                                <div style="margin-top: 2rem;">
-                                    <div style="display: inline-block; padding: 0.5rem 1rem; background: rgba(102, 126, 234, 0.1); border-radius: 20px; font-size: 0.85rem; color: #667eea;">
-                                        💡 提示：完成授权后会自动保存 Token
-                                    </div>
+                                <div style="font-size: 3rem; margin-bottom: 1rem;">🚀</div>
+                                <h3>开始获取您的第一个 Token</h3>
+                                <p style="margin-bottom: 1.5rem;">点击上方按钮开始授权流程</p>
+                                <div style="display: inline-block; padding: 0.75rem 1.5rem; background: rgba(102, 126, 234, 0.1); border-radius: 12px; font-size: 0.9rem; color: #667eea; border: 1px solid rgba(102, 126, 234, 0.2);">
+                                    ✨ 授权完成后 Token 会自动保存在这里
                                 </div>
                             </div>
                         `;
@@ -483,17 +475,31 @@
                         container.innerHTML = data.tokens.map((token, index) => `
                             <div class="token-item" style="animation: fadeInUp 0.5s ease ${index * 0.1}s both;">
                                 <div class="token-info">
-                                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
                                         <span style="width: 8px; height: 8px; background: #28a745; border-radius: 50%; display: inline-block;"></span>
                                         <span style="font-size: 0.8rem; color: #28a745; font-weight: 500;">活跃</span>
-                                        <span style="font-size: 0.75rem; color: #6c757d;">创建于 ${new Date(token.created_at || Date.now()).toLocaleDateString()}</span>
+                                        <span style="font-size: 0.75rem; color: #6c757d;">${new Date(token.created_at || Date.now()).toLocaleDateString()}</span>
                                     </div>
-                                    <div class="token">${token.token}</div>
-                                    <div class="tenant-url">🌐 ${token.tenant_url}</div>
+
+                                    <div style="margin-bottom: 0.75rem;">
+                                        <div style="font-size: 0.8rem; color: #6c757d; margin-bottom: 0.25rem;">🔑 Access Token</div>
+                                        <div class="token">${token.token}</div>
+                                    </div>
+
+                                    <div style="margin-bottom: 0.5rem;">
+                                        <div style="font-size: 0.8rem; color: #6c757d; margin-bottom: 0.25rem;">🌐 Tenant URL</div>
+                                        <div style="font-family: 'SF Mono', Monaco, monospace; font-size: 0.85rem; color: #495057; background: rgba(248, 249, 250, 0.8); padding: 0.4rem; border-radius: 6px;">${token.tenant_url}</div>
+                                    </div>
+
                                     ${token.remark ? `<div class="remark">📝 ${token.remark}</div>` : ''}
                                 </div>
                                 <div class="token-actions">
-                                    <button class="btn btn-small" onclick="copyToClipboard('${token.token}')">📋 复制</button>
+                                    <button class="btn btn-small" onclick="copyToClipboard('${token.token}', 'Token')" title="复制 Token">
+                                        📋 Token
+                                    </button>
+                                    <button class="btn btn-small" onclick="copyToClipboard('${token.tenant_url}', 'Tenant URL')" title="复制 Tenant URL" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); box-shadow: 0 4px 15px rgba(23, 162, 184, 0.4);">
+                                        🌐 URL
+                                    </button>
                                 </div>
                             </div>
                         `).join('');
@@ -507,9 +513,9 @@
         }
 
         // 复制到剪贴板功能
-        function copyToClipboard(text) {
+        function copyToClipboard(text, type = 'Token') {
             navigator.clipboard.writeText(text).then(function() {
-                showMessage('Token 已复制到剪贴板！', 'success');
+                showMessage(`${type} 已复制到剪贴板！ 📋`, 'success');
             }).catch(function(err) {
                 // 降级方案
                 const textArea = document.createElement('textarea');
@@ -518,7 +524,7 @@
                 textArea.select();
                 document.execCommand('copy');
                 document.body.removeChild(textArea);
-                showMessage('Token 已复制到剪贴板！', 'success');
+                showMessage(`${type} 已复制到剪贴板！ 📋`, 'success');
             });
         }
 
