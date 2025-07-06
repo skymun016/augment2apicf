@@ -30,9 +30,12 @@ export async function onRequestGet(context) {
         // 生成 OAuth 状态
         const oauthState = await createOAuthState();
         
-        // 保存 OAuth 状态到 KV
+        // 保存 OAuth 状态到 KV，添加创建时间元数据
         const stateKey = `oauth_state:${oauthState.state}`;
-        await env.TOKENS.put(stateKey, JSON.stringify(oauthState), { expirationTtl: 3600 }); // 1小时过期
+        await env.TOKENS.put(stateKey, JSON.stringify(oauthState), {
+            expirationTtl: 3600,
+            metadata: { createdAt: Date.now() }
+        }); // 1小时过期
         
         // 生成授权 URL
         const authorizeURL = generateAuthorizeURL(oauthState);

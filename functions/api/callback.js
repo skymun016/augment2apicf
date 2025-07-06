@@ -39,10 +39,49 @@ export async function onRequestPost(context) {
             });
         }
         
-        // 简化处理：重新生成 OAuth 状态用于获取 token
-        // 在实际应用中，应该根据 state 参数从 KV 中获取对应的 OAuth 状态
-        const oauthState = await createOAuthState();
-        
+        // 获取对应的 OAuth 状态
+        let oauthState = null;
+        if (state) {
+            const stateKey = `oauth_state:${state}`;
+            const oauthStateStr = await env.TOKENS.get(stateKey);
+            if (oauthStateStr) {
+                try {
+                    oauthState = JSON.parse(oauthStateStr);
+                } catch (e) {
+                    console.error('解析 OAuth 状态失败:', e);
+                }
+            }
+        }
+
+        // 如果没有找到对应的状态，尝试获取最新的状态
+        if (!oauthState) {
+            const { keys } = await env.TOKENS.list({ prefix: 'oauth_state:' });
+            if (keys.length > 0) {
+                // 按时间排序，获取最新的状态
+                keys.sort((a, b) => b.metadata?.createdAt - a.metadata?.createdAt);
+                const latestStateKey = keys[0].name;
+                const oauthStateStr = await env.TOKENS.get(latestStateKey);
+                if (oauthStateStr) {
+                    try {
+                        oauthState = JSON.parse(oauthStateStr);
+                    } catch (e) {
+                        console.error('解析最新 OAuth 状态失败:', e);
+                    }
+                }
+            }
+        }
+
+        // 如果还是没有状态，返回错误
+        if (!oauthState || !oauthState.codeVerifier) {
+            return new Response(JSON.stringify({
+                status: 'error',
+                error: 'OAuth 状态已过期或丢失，请重新获取授权链接'
+            }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
         // 获取访问令牌
         const tokenResponse = await fetch(tenant_url + 'token', {
             method: 'POST',
@@ -56,8 +95,21 @@ export async function onRequestPost(context) {
             })
         });
         
+        if (!tokenResponse.ok) {
+            const errorText = await tokenResponse.text();
+            console.error('Token 请求失败:', tokenResponse.status, errorText);
+            return new Response(JSON.stringify({
+                status: 'error',
+                error: `Token 请求失败 (${tokenResponse.status}): ${errorText}`
+            }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
         const tokenData = await tokenResponse.json();
-        
+        console.log('Token 响应:', tokenData);
+
         if (tokenData.access_token) {
             // 保存 Token 到 KV 存储
             const tokenKey = `token:${tokenData.access_token}`;
