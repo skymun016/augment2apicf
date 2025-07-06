@@ -436,7 +436,7 @@
                     🚀 验证并进入
                 </button>
             </form>
-            <div style="font-size: 0.8rem; color: #6c757d; margin-top: 1rem;">
+            <div id="password-info" style="font-size: 0.8rem; color: #6c757d; margin-top: 1rem;">
                 💡 密码验证通过后会在本设备记住您的登录状态
             </div>
         </div>
@@ -561,7 +561,8 @@
 
     <script>
         let authToken = '';
-        let ACCESS_PASSWORD = 'augment2024'; // 默认访问密码
+        let passwordHash = ''; // 服务器端密码哈希
+        let hasCustomPassword = false; // 是否设置了自定义密码
 
         function getAuthToken() {
             const cookies = document.cookie.split(';');
@@ -593,37 +594,89 @@
             document.getElementById('password-overlay').style.display = 'none';
         }
 
-        // 获取当前密码（支持自定义密码）
-        function getCurrentPassword() {
-            const customPassword = localStorage.getItem('customPassword');
-            return customPassword || ACCESS_PASSWORD;
+        // 密码哈希函数
+        async function hashPassword(password) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // 加载密码配置
+        async function loadPasswordConfig() {
+            try {
+                const response = await fetch('/api/config');
+                const data = await response.json();
+                if (data.status === 'success') {
+                    passwordHash = data.passwordHash;
+                    hasCustomPassword = data.hasCustomPassword;
+
+                    // 更新密码信息显示
+                    updatePasswordInfo();
+                    return true;
+                }
+            } catch (error) {
+                console.error('加载密码配置失败:', error);
+                // 如果无法加载配置，使用默认密码的哈希
+                passwordHash = await hashPassword('augment2024');
+                hasCustomPassword = false;
+                updatePasswordInfo();
+            }
+            return false;
+        }
+
+        // 更新密码信息显示
+        function updatePasswordInfo() {
+            const infoEl = document.getElementById('password-info');
+            if (hasCustomPassword) {
+                infoEl.innerHTML = '🔐 使用环境变量配置的自定义密码<br>💡 密码验证通过后会在本设备记住您的登录状态';
+            } else {
+                infoEl.innerHTML = '🔓 使用默认密码 (augment2024)<br>💡 密码验证通过后会在本设备记住您的登录状态';
+            }
         }
 
         // 验证密码
-        function verifyPassword(password) {
-            return password === getCurrentPassword();
+        async function verifyPassword(password) {
+            const inputHash = await hashPassword(password);
+            return inputHash === passwordHash;
         }
 
         // 处理密码表单提交
-        function handlePasswordSubmit(event) {
+        async function handlePasswordSubmit(event) {
             event.preventDefault();
             const password = document.getElementById('password-input').value;
             const errorEl = document.getElementById('password-error');
+            const submitBtn = event.target.querySelector('button[type="submit"]');
 
-            if (verifyPassword(password)) {
-                localStorage.setItem('passwordAuthenticated', 'true');
-                hidePasswordOverlay();
-                // 密码验证成功后初始化应用
-                initializeApp();
-            } else {
+            // 显示加载状态
+            submitBtn.disabled = true;
+            submitBtn.textContent = '验证中...';
+
+            try {
+                const isValid = await verifyPassword(password);
+                if (isValid) {
+                    localStorage.setItem('passwordAuthenticated', 'true');
+                    hidePasswordOverlay();
+                    // 密码验证成功后初始化应用
+                    initializeApp();
+                } else {
+                    errorEl.style.display = 'block';
+                    document.getElementById('password-input').value = '';
+                    document.getElementById('password-input').focus();
+
+                    // 3秒后隐藏错误信息
+                    setTimeout(() => {
+                        errorEl.style.display = 'none';
+                    }, 3000);
+                }
+            } catch (error) {
+                console.error('密码验证失败:', error);
+                errorEl.textContent = '验证失败，请重试';
                 errorEl.style.display = 'block';
-                document.getElementById('password-input').value = '';
-                document.getElementById('password-input').focus();
-
-                // 3秒后隐藏错误信息
-                setTimeout(() => {
-                    errorEl.style.display = 'none';
-                }, 3000);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🚀 验证并进入';
             }
         }
 
@@ -866,44 +919,61 @@
         }
 
         // 处理密码重置表单提交
-        function handleResetPasswordSubmit(event) {
+        async function handleResetPasswordSubmit(event) {
             event.preventDefault();
             const currentPassword = document.getElementById('current-password').value;
             const newPassword = document.getElementById('new-password').value;
             const confirmPassword = document.getElementById('confirm-password').value;
             const errorEl = document.getElementById('reset-password-error');
+            const submitBtn = event.target.querySelector('button[type="submit"]');
 
-            // 验证当前密码
-            if (!verifyPassword(currentPassword)) {
-                errorEl.textContent = '当前密码错误';
+            // 显示加载状态
+            submitBtn.disabled = true;
+            submitBtn.textContent = '更新中...';
+
+            try {
+                // 验证当前密码
+                const isCurrentValid = await verifyPassword(currentPassword);
+                if (!isCurrentValid) {
+                    errorEl.textContent = '当前密码错误';
+                    errorEl.style.display = 'block';
+                    return;
+                }
+
+                // 验证新密码
+                if (newPassword.length < 6) {
+                    errorEl.textContent = '新密码长度至少6位';
+                    errorEl.style.display = 'block';
+                    return;
+                }
+
+                // 验证密码确认
+                if (newPassword !== confirmPassword) {
+                    errorEl.textContent = '两次输入的新密码不一致';
+                    errorEl.style.display = 'block';
+                    return;
+                }
+
+                // 更新密码
+                await updatePassword(newPassword);
+                hideResetPasswordOverlay();
+                showMessage('密码更新成功！ 🎉', 'success');
+            } catch (error) {
+                console.error('密码重置失败:', error);
+                errorEl.textContent = '密码重置失败，请重试';
                 errorEl.style.display = 'block';
-                return;
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🔄 更新密码';
             }
-
-            // 验证新密码
-            if (newPassword.length < 6) {
-                errorEl.textContent = '新密码长度至少6位';
-                errorEl.style.display = 'block';
-                return;
-            }
-
-            // 验证密码确认
-            if (newPassword !== confirmPassword) {
-                errorEl.textContent = '两次输入的新密码不一致';
-                errorEl.style.display = 'block';
-                return;
-            }
-
-            // 更新密码
-            updatePassword(newPassword);
-            hideResetPasswordOverlay();
-            showMessage('密码更新成功！ 🎉', 'success');
         }
 
         // 更新密码
-        function updatePassword(newPassword) {
-            // 将新密码存储到localStorage
-            localStorage.setItem('customPassword', newPassword);
+        async function updatePassword(newPassword) {
+            // 更新本地密码哈希
+            passwordHash = await hashPassword(newPassword);
+            // 将新密码哈希存储到localStorage（注意：这只是前端临时方案）
+            localStorage.setItem('customPasswordHash', passwordHash);
             console.log('密码已更新并保存');
         }
 
@@ -913,12 +983,21 @@
             loadTokens();
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             // 绑定密码表单事件
             document.getElementById('password-form').addEventListener('submit', handlePasswordSubmit);
 
             // 绑定密码重置表单事件
             document.getElementById('reset-password-form').addEventListener('submit', handleResetPasswordSubmit);
+
+            // 加载密码配置
+            await loadPasswordConfig();
+
+            // 检查本地自定义密码
+            const customPasswordHash = localStorage.getItem('customPasswordHash');
+            if (customPasswordHash) {
+                passwordHash = customPasswordHash;
+            }
 
             // 检查密码验证状态
             if (!checkPasswordAuth()) {
