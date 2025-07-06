@@ -261,6 +261,18 @@
             }
         }
 
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 6px rgba(40, 167, 69, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+            }
+        }
+
         .empty-state {
             text-align: center;
             padding: 4rem 2rem;
@@ -475,39 +487,88 @@
                             </div>
                         `;
                     } else {
-                        container.innerHTML = data.tokens.map((token, index) => `
-                            <div class="token-item" style="animation: fadeInUp 0.5s ease ${index * 0.1}s both;">
-                                <div class="token-info" style="width: 100%;">
-                                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
-                                        <span style="width: 8px; height: 8px; background: #28a745; border-radius: 50%; display: inline-block;"></span>
-                                        <span style="font-size: 0.8rem; color: #28a745; font-weight: 500;">活跃</span>
-                                        <span style="font-size: 0.75rem; color: #6c757d;">${new Date(token.created_at || Date.now()).toLocaleDateString()}</span>
+                        container.innerHTML = data.tokens.map((token, index) => {
+                            const createdDate = new Date(token.created_at || Date.now());
+                            const formattedDate = createdDate.toLocaleString('zh-CN', {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit',
+                                hour12: false
+                            });
+
+                            return `
+                            <div class="token-item" style="animation: fadeInUp 0.5s ease ${index * 0.1}s both; position: relative;">
+                                <!-- 序号标识 -->
+                                <div style="
+                                    position: absolute;
+                                    top: -8px;
+                                    left: -8px;
+                                    width: 28px;
+                                    height: 28px;
+                                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                    color: white;
+                                    border-radius: 50%;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    font-size: 0.75rem;
+                                    font-weight: 600;
+                                    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+                                    z-index: 1;
+                                ">${index + 1}</div>
+
+                                <div class="token-info" style="width: 100%; padding-left: 1rem;">
+                                    <!-- 状态和时间信息 -->
+                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; padding: 0.75rem; background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(40, 167, 69, 0.05) 100%); border-radius: 8px; border-left: 3px solid #28a745;">
+                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                            <span style="width: 8px; height: 8px; background: #28a745; border-radius: 50%; display: inline-block; animation: pulse 2s infinite;"></span>
+                                            <span style="font-size: 0.85rem; color: #28a745; font-weight: 600;">活跃状态</span>
+                                        </div>
+                                        <div style="text-align: right;">
+                                            <div style="font-size: 0.75rem; color: #6c757d; margin-bottom: 0.1rem;">创建时间</div>
+                                            <div style="font-size: 0.8rem; color: #495057; font-weight: 500; font-family: 'SF Mono', Monaco, monospace;">${formattedDate}</div>
+                                        </div>
                                     </div>
 
-                                    <div style="margin-bottom: 0.75rem;">
-                                        <div style="font-size: 0.8rem; color: #6c757d; margin-bottom: 0.25rem;">🔑 Access Token</div>
-                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                            <div class="token" style="flex: 1; margin-bottom: 0;">${token.token}</div>
-                                            <button class="btn btn-small" onclick="copyToClipboard('${token.token}', 'Token')" title="复制 Token" style="flex-shrink: 0;">
+                                    <!-- Token 信息 -->
+                                    <div style="margin-bottom: 1rem;">
+                                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                            <span style="font-size: 0.85rem; color: #495057; font-weight: 600;">🔑</span>
+                                            <span style="font-size: 0.85rem; color: #495057; font-weight: 600;">Access Token</span>
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                            <div class="token" style="flex: 1; margin-bottom: 0; position: relative;">
+                                                ${token.token}
+                                                <div style="position: absolute; top: 0; right: 0; bottom: 0; width: 30px; background: linear-gradient(90deg, transparent 0%, rgba(248, 249, 250, 0.8) 100%); pointer-events: none;"></div>
+                                            </div>
+                                            <button class="btn btn-small" onclick="copyToClipboard('${token.token}', 'Token')" title="复制 Token" style="flex-shrink: 0; min-width: 40px;">
                                                 📋
                                             </button>
                                         </div>
                                     </div>
 
+                                    <!-- Tenant URL 信息 -->
                                     <div style="margin-bottom: 0.5rem;">
-                                        <div style="font-size: 0.8rem; color: #6c757d; margin-bottom: 0.25rem;">🌐 Tenant URL</div>
-                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                            <div style="flex: 1; font-family: 'SF Mono', Monaco, monospace; font-size: 0.85rem; color: #495057; background: rgba(248, 249, 250, 0.8); padding: 0.4rem; border-radius: 6px;">${token.tenant_url}</div>
-                                            <button class="btn btn-small" onclick="copyToClipboard('${token.tenant_url}', 'Tenant URL')" title="复制 Tenant URL" style="flex-shrink: 0; background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); box-shadow: 0 4px 15px rgba(23, 162, 184, 0.4);">
+                                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                            <span style="font-size: 0.85rem; color: #495057; font-weight: 600;">🌐</span>
+                                            <span style="font-size: 0.85rem; color: #495057; font-weight: 600;">Tenant URL</span>
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                            <div style="flex: 1; font-family: 'SF Mono', Monaco, monospace; font-size: 0.85rem; color: #495057; background: rgba(248, 249, 250, 0.8); padding: 0.6rem; border-radius: 8px; border: 1px solid rgba(233, 236, 239, 0.5);">${token.tenant_url}</div>
+                                            <button class="btn btn-small" onclick="copyToClipboard('${token.tenant_url}', 'Tenant URL')" title="复制 Tenant URL" style="flex-shrink: 0; min-width: 40px; background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); box-shadow: 0 4px 15px rgba(23, 162, 184, 0.4);">
                                                 🌐
                                             </button>
                                         </div>
                                     </div>
 
-                                    ${token.remark ? `<div class="remark">📝 ${token.remark}</div>` : ''}
+                                    ${token.remark ? `<div class="remark" style="margin-top: 1rem; padding: 0.5rem; background: rgba(40, 167, 69, 0.1); border-radius: 6px; border-left: 3px solid #28a745;">📝 ${token.remark}</div>` : ''}
                                 </div>
                             </div>
-                        `).join('');
+                        `;
+                        }).join('');
                     }
                 } else {
                     container.innerHTML = `<div class="message error">加载失败: ${data.error}</div>`;
