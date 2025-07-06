@@ -1,0 +1,17 @@
+# Cloudflare Pages 配置文件
+
+[build]
+command = ""
+publish = "public"
+
+[build.environment]
+NODE_VERSION = "18"
+
+# KV 命名空间绑定
+[[env.production.kv_namespaces]]
+binding = "TOKENS"
+id = "your-kv-namespace-id"
+
+[[env.preview.kv_namespaces]]
+binding = "TOKENS"
+id = "your-preview-kv-namespace-id"
