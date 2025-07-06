@@ -1,6 +1,6 @@
 # Augment Token Manager
 
-> 🚀 简单易用的 Augment Token 获取和管理工具
+> 🚀 简单易用的 Augment Token 获取和管理工具 - Cloudflare Pages 版本
 
 一个极简的 Web 服务，专注于 Augment API Token 的获取和管理，去除了复杂的 API 代理功能，只保留核心的 OAuth 授权流程和 Token 存储功能。
 
