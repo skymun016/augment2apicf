@@ -63,8 +63,8 @@
                     <li>点击"获取授权链接"按钮</li>
                     <li>复制授权链接并在新窗口中打开</li>
                     <li>完成 Augment 账号登录/注册</li>
-                    <li>从回调页面复制授权码</li>
-                    <li>在下方输入授权码和租户URL，点击"获取Token"</li>
+                    <li>从授权完成页面点击"Copy to Clipboard"按钮</li>
+                    <li>在下方粘贴完整的 JSON 授权数据，点击"获取Token"</li>
                 </ol>
             </div>
 
@@ -80,13 +80,11 @@
 
             <form id="token-form">
                 <div class="form-group">
-                    <label for="auth-code">授权码 *</label>
-                    <input type="text" id="auth-code" name="code" required placeholder="从授权回调页面复制的授权码">
-                </div>
-
-                <div class="form-group">
-                    <label for="tenant-url">租户URL *</label>
-                    <input type="url" id="tenant-url" name="tenant_url" required placeholder="https://d0.api.augmentcode.com/" value="https://d0.api.augmentcode.com/">
+                    <label for="auth-data">授权数据 (JSON格式) *</label>
+                    <textarea id="auth-data" name="auth_data" required rows="4" placeholder='{"code":"_4a38a44760394403acfc2f272c153b88","state":"idkt51V.dmiZnuTMw_FYYBTO3-EFam-b","tenant_url":"https://d2.api.augmentcode.com/"}'></textarea>
+                    <p style="font-size: 0.8rem; color: #6c757d; margin-top: 0.25rem;">
+                        请粘贴从授权完成页面复制的完整 JSON 数据
+                    </p>
                 </div>
 
                 <button type="submit" class="btn" id="submit-btn">
@@ -143,20 +141,41 @@
         document.getElementById('token-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             const submitBtn = document.getElementById('submit-btn');
-            const formData = new FormData(e.target);
+            const authDataText = document.getElementById('auth-data').value.trim();
+
             submitBtn.disabled = true;
             submitBtn.textContent = '获取中...';
+
             try {
+                // 解析 JSON 数据
+                let authData;
+                try {
+                    authData = JSON.parse(authDataText);
+                } catch (parseError) {
+                    showMessage('JSON 格式错误，请检查输入的数据格式', 'error');
+                    return;
+                }
+
+                // 验证必要字段
+                if (!authData.code || !authData.tenant_url) {
+                    showMessage('授权数据缺少必要字段 (code 或 tenant_url)', 'error');
+                    return;
+                }
+
                 const response = await fetch('/api/callback', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-Auth-Token': authToken },
-                    body: JSON.stringify({ code: formData.get('code'), tenant_url: formData.get('tenant_url') })
+                    body: JSON.stringify({
+                        code: authData.code,
+                        tenant_url: authData.tenant_url,
+                        state: authData.state || ''
+                    })
                 });
+
                 const data = await response.json();
                 if (data.status === 'success') {
                     showMessage('Token 获取成功！', 'success');
                     document.getElementById('token-form').reset();
-                    document.getElementById('tenant-url').value = 'https://d0.api.augmentcode.com/';
                     loadTokens();
                 } else {
                     showMessage('获取Token失败: ' + (data.error || '未知错误'), 'error');

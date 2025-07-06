@@ -16,12 +16,23 @@ export async function onRequestPost(context) {
             });
         }
         
-        const { code, tenant_url } = await request.json();
-        
+        const { code, tenant_url, state } = await request.json();
+
         if (!code || !tenant_url) {
             return new Response(JSON.stringify({
                 status: 'error',
-                error: '缺少必要参数'
+                error: '缺少必要参数 (code 或 tenant_url)'
+            }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
+        // 验证 tenant_url 格式
+        if (!tenant_url.startsWith('https://') || !tenant_url.endsWith('/')) {
+            return new Response(JSON.stringify({
+                status: 'error',
+                error: 'tenant_url 格式不正确，必须以 https:// 开头并以 / 结尾'
             }), {
                 status: 400,
                 headers: { 'Content-Type': 'application/json' }
