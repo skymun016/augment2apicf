@@ -1,0 +1,15 @@
+{
+  "name": "augment-token-manager",
+  "version": "1.0.0",
+  "description": "Simple Augment Token Manager for Cloudflare Pages",
+  "scripts": {
+    "build": "echo 'No build step required for static files'",
+    "dev": "wrangler pages dev public"
+  },
+  "keywords": ["augment", "token", "cloudflare", "pages"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}
