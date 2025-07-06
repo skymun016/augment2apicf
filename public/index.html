@@ -325,14 +325,107 @@
                 justify-content: flex-end;
             }
         }
+        /* 密码验证界面样式 */
+        .password-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .password-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .password-card h2 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+        }
+
+        .password-card p {
+            color: #6c757d;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            font-family: 'SF Mono', Monaco, monospace;
+            letter-spacing: 0.1em;
+        }
+
+        .password-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .password-error {
+            color: #e74c3c;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            display: none;
+        }
     </style>
 </head>
 <body>
+    <!-- 密码验证界面 -->
+    <div id="password-overlay" class="password-overlay">
+        <div class="password-card">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🔐</div>
+            <h2>访问验证</h2>
+            <p>请输入访问密码以继续使用 Augment Token Manager</p>
+            <form id="password-form">
+                <input
+                    type="password"
+                    id="password-input"
+                    class="password-input"
+                    placeholder="请输入访问密码"
+                    autocomplete="current-password"
+                    required
+                >
+                <div id="password-error" class="password-error">密码错误，请重试</div>
+                <button type="submit" class="btn" style="width: 100%; margin-bottom: 1rem;">
+                    🚀 验证并进入
+                </button>
+            </form>
+            <div style="font-size: 0.8rem; color: #6c757d; margin-top: 1rem;">
+                💡 密码验证通过后会在本设备记住您的登录状态
+            </div>
+        </div>
+    </div>
+
     <div class="container">
         <div class="header">
-            <h1>🚀 Augment Token Manager</h1>
+            <div style="position: absolute; top: 2rem; right: 2rem;">
+                <button onclick="resetPassword()" class="btn btn-small" style="background: rgba(255, 255, 255, 0.2); color: white; border: 1px solid rgba(255, 255, 255, 0.3);" title="重置访问密码">
+                    � 重置密码
+                </button>
+            </div>
+            <h1>�🚀 Augment Token Manager</h1>
             <p>✨ 简单易用的 Augment Token 获取和管理工具 ✨</p>
-            <p style="font-size: 1rem; margin-top: 0.5rem; opacity: 0.8;">🔓 无需密码访问 | 🌐 全球 CDN 加速 | ⚡ 极速响应</p>
+            <p style="font-size: 1rem; margin-top: 0.5rem; opacity: 0.8;">� 安全访问 | 🌐 全球 CDN 加速 | ⚡ 极速响应</p>
         </div>
 
         <div id="message" class="message" style="display: none;"></div>
@@ -385,6 +478,7 @@
 
     <script>
         let authToken = '';
+        const ACCESS_PASSWORD = 'augment2024'; // 访问密码
 
         function getAuthToken() {
             const cookies = document.cookie.split(';');
@@ -393,6 +487,55 @@
                 if (name === 'auth_token') return value;
             }
             return '';
+        }
+
+        // 检查密码验证状态
+        function checkPasswordAuth() {
+            const isAuthenticated = localStorage.getItem('passwordAuthenticated');
+            if (isAuthenticated === 'true') {
+                hidePasswordOverlay();
+                return true;
+            }
+            return false;
+        }
+
+        // 显示密码验证界面
+        function showPasswordOverlay() {
+            document.getElementById('password-overlay').style.display = 'flex';
+            document.getElementById('password-input').focus();
+        }
+
+        // 隐藏密码验证界面
+        function hidePasswordOverlay() {
+            document.getElementById('password-overlay').style.display = 'none';
+        }
+
+        // 验证密码
+        function verifyPassword(password) {
+            return password === ACCESS_PASSWORD;
+        }
+
+        // 处理密码表单提交
+        function handlePasswordSubmit(event) {
+            event.preventDefault();
+            const password = document.getElementById('password-input').value;
+            const errorEl = document.getElementById('password-error');
+
+            if (verifyPassword(password)) {
+                localStorage.setItem('passwordAuthenticated', 'true');
+                hidePasswordOverlay();
+                // 密码验证成功后初始化应用
+                initializeApp();
+            } else {
+                errorEl.style.display = 'block';
+                document.getElementById('password-input').value = '';
+                document.getElementById('password-input').focus();
+
+                // 3秒后隐藏错误信息
+                setTimeout(() => {
+                    errorEl.style.display = 'none';
+                }, 3000);
+            }
         }
 
         function showMessage(text, type = 'success') {
@@ -619,9 +762,30 @@
             }, 3000);
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
+        // 重置密码
+        function resetPassword() {
+            if (confirm('确定要重置访问密码吗？重置后需要重新输入密码才能访问。')) {
+                localStorage.removeItem('passwordAuthenticated');
+                location.reload();
+            }
+        }
+
+        // 初始化应用
+        function initializeApp() {
             authToken = getAuthToken();
             loadTokens();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // 绑定密码表单事件
+            document.getElementById('password-form').addEventListener('submit', handlePasswordSubmit);
+
+            // 检查密码验证状态
+            if (!checkPasswordAuth()) {
+                showPasswordOverlay();
+            } else {
+                initializeApp();
+            }
         });
     </script>
 </body>
