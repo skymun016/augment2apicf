@@ -20,9 +20,32 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 2rem;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        @media (min-width: 1024px) {
+            .container {
+                grid-template-columns: 450px 1fr;
+                gap: 3rem;
+                align-items: start;
+            }
+        }
+
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
         }
 
         .header {
@@ -45,49 +68,101 @@
         }
 
         .card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow:
+                0 20px 40px rgba(0, 0, 0, 0.1),
+                0 8px 16px rgba(0, 0, 0, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
             padding: 2.5rem;
-            margin-bottom: 2rem;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
         }
 
         .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            transform: translateY(-6px);
+            box-shadow:
+                0 32px 64px rgba(0, 0, 0, 0.15),
+                0 16px 32px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
         }
 
         .card h2 {
             color: #2c3e50;
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            font-size: 1.5rem;
-            font-weight: 600;
+            gap: 0.75rem;
+            font-size: 1.6rem;
+            font-weight: 700;
+            position: relative;
+            padding-bottom: 1rem;
+        }
+
+        .card h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 2px;
         }
 
         .btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 0.875rem 2rem;
-            border-radius: 12px;
+            padding: 1.2rem 2.5rem;
+            border-radius: 16px;
             cursor: pointer;
             font-size: 1rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             text-decoration: none;
             display: inline-block;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            text-align: center;
+            box-shadow:
+                0 8px 25px rgba(102, 126, 234, 0.4),
+                0 4px 12px rgba(102, 126, 234, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
         }
 
         .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+            transform: translateY(-3px);
+            box-shadow:
+                0 12px 35px rgba(102, 126, 234, 0.5),
+                0 6px 18px rgba(102, 126, 234, 0.3);
         }
 
         .btn:active {
@@ -145,22 +220,39 @@
             font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
         }
         .token-item {
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px solid rgba(233, 236, 239, 0.5);
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(5px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.1),
+                0 4px 16px rgba(0, 0, 0, 0.05);
+        }
+
+        .token-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
         }
 
         .token-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            background: rgba(255, 255, 255, 0.95);
+            transform: translateY(-4px);
+            box-shadow:
+                0 16px 48px rgba(0, 0, 0, 0.15),
+                0 8px 24px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.98);
         }
 
         .token-info {
@@ -301,28 +393,57 @@
             font-weight: 500;
         }
 
+        @media (max-width: 1023px) {
+            .container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+                padding: 1.5rem;
+            }
+
+            .left-panel, .right-panel {
+                width: 100%;
+            }
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 1rem;
+                gap: 1.5rem;
+            }
+
+            .header {
+                text-align: center;
+                position: relative;
             }
 
             .header h1 {
-                font-size: 2.5rem;
+                font-size: 2.2rem;
             }
 
             .card {
                 padding: 1.5rem;
+                border-radius: 16px;
             }
 
             .token-item {
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 1rem;
+                padding: 1.5rem;
+                border-radius: 16px;
             }
 
             .token-actions {
                 width: 100%;
                 justify-content: flex-end;
+            }
+
+            .btn {
+                padding: 1rem 2rem;
+            }
+
+            .btn-small {
+                padding: 0.5rem 1rem !important;
             }
         }
         /* 密码验证界面样式 */
@@ -500,18 +621,20 @@
     </div>
 
     <div class="container">
-        <div class="header">
-            <div style="position: absolute; top: 2rem; right: 2rem;">
-                <button onclick="resetPassword()" class="btn btn-small" style="background: rgba(255, 255, 255, 0.2); color: white; border: 1px solid rgba(255, 255, 255, 0.3);" title="重置访问密码">
-                    � 重置密码
-                </button>
+        <!-- 左侧面板 -->
+        <div class="left-panel">
+            <div class="header">
+                <div style="position: absolute; top: 1rem; right: 1rem;">
+                    <button onclick="resetPassword()" class="btn btn-small" style="background: rgba(255, 255, 255, 0.2); color: white; border: 1px solid rgba(255, 255, 255, 0.3); padding: 0.5rem 1rem; font-size: 0.85rem;" title="重置访问密码">
+                        � 重置密码
+                    </button>
+                </div>
+                <h1>�🚀 Augment Token Manager</h1>
+                <p>✨ 简单易用的 Augment Token 获取和管理工具 ✨</p>
+                <p style="font-size: 1rem; margin-top: 0.5rem; opacity: 0.8;">� 安全访问 | 🌐 全球 CDN 加速 | ⚡ 极速响应</p>
             </div>
-            <h1>�🚀 Augment Token Manager</h1>
-            <p>✨ 简单易用的 Augment Token 获取和管理工具 ✨</p>
-            <p style="font-size: 1rem; margin-top: 0.5rem; opacity: 0.8;">� 安全访问 | 🌐 全球 CDN 加速 | ⚡ 极速响应</p>
-        </div>
 
-        <div id="message" class="message" style="display: none;"></div>
+            <div id="message" class="message" style="display: none;"></div>
 
         <!-- 获取Token卡片 -->
         <div class="card">
@@ -546,15 +669,19 @@
                 </button>
             </form>
         </div>
+        </div>
 
-        <!-- Token列表卡片 -->
-        <div class="card">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
-                <h2 style="margin-bottom: 0;">📋 已保存的 Tokens</h2>
-                <div id="copy-message" style="display: none;"></div>
-            </div>
-            <div id="token-list-container">
-                <div class="loading">加载中...</div>
+        <!-- 右侧面板 -->
+        <div class="right-panel">
+            <!-- Token列表卡片 -->
+            <div class="card">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+                    <h2 style="margin-bottom: 0;">📋 已保存的 Tokens</h2>
+                    <div id="copy-message" style="display: none;"></div>
+                </div>
+                <div id="token-list-container">
+                    <div class="loading">加载中...</div>
+                </div>
             </div>
         </div>
     </div>
