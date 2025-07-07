@@ -16,7 +16,7 @@ export async function onRequestPost(context) {
             });
         }
         
-        const { code, tenant_url, state } = await request.json();
+        const { code, tenant_url, state, remark } = await request.json();
 
         if (!code || !tenant_url) {
             return new Response(JSON.stringify({
@@ -116,7 +116,7 @@ export async function onRequestPost(context) {
             await env.TOKENS.put(tokenKey, JSON.stringify({
                 token: tokenData.access_token,
                 tenant_url: tenant_url,
-                remark: '',
+                remark: remark || '',
                 created_at: Date.now()
             }));
             
